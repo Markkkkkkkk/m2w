@@ -1,0 +1,30 @@
+.gitattributes
+@test/*
+*.code-workspace
+m2w/dist/*
+m2w/m2w.egg-info/*
+m2w/setup.py
+dist/*
+m2w.egg-info/*
+m2w/__pycache__/*
+build/*
+.vscode/*
+
+# pycharm config
+.idea
+venv
+
+# configuration
+/config
+config.ini
+
+# poetry enviroments
+/poetry/.venv
+pyproject.toml
+poetry.lock
+.venv
+
+m2w/rest_api/__pycache__
+
+#vscode configuration
+.vscode
