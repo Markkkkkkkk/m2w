@@ -5,7 +5,8 @@
 # @FileName: update.py
 # @Software: PyCharm
 
-from .categories import create_category
+from .articleCategories import create_articleCategory
+from .shuoshuoCategories import create_custom_taxonomy_term
 from .tags import create_tag
 import frontmatter
 import markdown
@@ -46,27 +47,36 @@ def _update_article(self, md_path, post_metadata, last_update=False) -> None:
     metadata_keys = post_metadata.keys()
     for key in metadata_keys:
         if (
-            key in post_from_file.metadata
+                key in post_from_file.metadata
         ):  # 若md文件中没有元数据'category'，则无法调用post.metadata['category']
             post_metadata[key] = post_from_file.metadata[key]
 
     # 4 更新tag和category的id信息
     tags = []
     categories = []
+    status = post_metadata["status"]
+    postType = post_metadata["postType"]
     for tag in post_metadata["tag"]:
         if tag in self.tags_dict.keys():
             tags.append(self.tags_dict[tag])
         else:
             tags.append(create_tag(self, tag))
     for category in post_metadata["category"]:
-        if category in self.categories_dict.keys():
-            categories.append(self.categories_dict[category])
+        if (postType == "shuoshuo"):
+            if category in self.categories_dict["littleTalk"].keys():
+                categories.append(self.categories_dict["littleTalk"][category])
+            else:
+                categories.append(create_custom_taxonomy_term(self, "shuoshuo_category", category))
         else:
-            categories.append(create_category(self, category))
-    status = post_metadata["status"]
+            if category in self.categories_dict["article"].keys():
+                categories.append(self.categories_dict["article"][category])
+            else:
+                categories.append(create_articleCategory(self, category))
     # 5 构造上传的请求内容
     post_data = {
+        "title": filename.split(".md")[0],
         "content": str(post_content_html, encoding="utf-8"),
+        "status": status,
         "categories": categories,
         "tags": tags,
     }
@@ -76,28 +86,55 @@ def _update_article(self, md_path, post_metadata, last_update=False) -> None:
             time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(time.time())),
         )
     # 删除文章:force=false（默认）	文章会进入回收站，可恢复  force=true 彻底删除文章，无法恢复
-    if(status=='delete'):
-        resp = httpx.delete(
-        # url=self.url
-        # + f"wp-json/wp/v2/posts/{self.article_title_dict[os.path.basename(md_path).strip('.md')]}",
-        url=self.url
-        + f"wp-json/wp/v2/posts/{self.article_title_dict[filename_prefix]}?force=true",
-        headers=self.wp_header
-         )
+    if (status == 'delete'):
+        if (postType == "shuoshuo"):
+            resp = httpx.delete(
+                # proxies=self.proxies,
+                # url=self.url
+                # + f"wp-json/wp/v2/posts/{self.article_title_dict[os.path.basename(md_path).strip('.md')]}",
+                url=self.url
+                    + f"wp-json/wp/v2/shuoshuo/{post_data['title']}",
+                timeout=self.timeout,
+                headers=self.wp_header
+            )
+        else:
+            resp = httpx.delete(
+                timeout=self.timeout,
+                # proxies=self.proxies,
+                # url=self.url
+                # + f"wp-json/wp/v2/posts/{self.article_title_dict[os.path.basename(md_path).strip('.md')]}",
+                url=self.url
+                    + f"wp-json/wp/v2/posts/{self.title_dict['article'][filename_prefix]}?force=true",
+                headers=self.wp_header
+            )
     else:
-        # 更新文章
-        resp = httpx.post(
-            #url=self.url
-             #+ f"wp-json/wp/v2/posts/{self.article_title_dict[os.path.basename(md_path).strip('.md')]}",
-            url=self.url
-            + f"wp-json/wp/v2/posts/{self.article_title_dict[filename_prefix]}",
-            headers=self.wp_header,
-            json=post_data,
-        )
+        if (postType == "shuoshuo"):
+            resp = httpx.put(
+                timeout=self.timeout,
+                # proxies=self.proxies,
+                url=self.url
+                    + "wp-json/wp/v2/shuoshuo",
+                headers=self.wp_header,
+                json=post_data,
+            )
+        else:
+            # 更新文章
+            resp = httpx.post(
+                timeout=self.timeout,
+                # proxies=self.proxies,
+                # url=self.url
+                # + f"wp-json/wp/v2/posts/{self.article_title_dict[os.path.basename(md_path).strip('.md')]}",
+                url=self.url
+                    + f"wp-json/wp/v2/posts/{self.title_dict['article'][filename_prefix]}",
+                headers=self.wp_header,
+                json=post_data,
+            )
     try:
-        assert (
-            resp.status_code == 200
-        ), f"File {md_path} updated failed. Please try again!"
+        # 说说200是成功，文章201是成功
+        if resp.status_code != 200 and resp.status_code != 201:
+            print(f"上传失败，状态码：{resp.status_code}")
+            print("响应内容：", resp.text)
+            raise AssertionError(f"File {md_path} uploaded failed. Please try again!")
     except AssertionError as e:
         print("Reminder from m2w: " + str(e))
-        raise AssertionError
+        raise

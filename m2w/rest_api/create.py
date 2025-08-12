@@ -6,7 +6,8 @@
 # @Software: PyCharm
 
 from .tags import create_tag
-from .categories import create_category
+from .articleCategories import create_articleCategory
+from .shuoshuoCategories import create_custom_taxonomy_term
 import frontmatter
 import markdown
 import os
@@ -41,24 +42,30 @@ def _create_article(self, md_path, post_metadata) -> None:
     metadata_keys = post_metadata.keys()
     for key in metadata_keys:
         if (
-            key in post_from_file.metadata
+                key in post_from_file.metadata
         ):  # 若md文件中没有元数据'category'，则无法调用post.metadata['category']
             post_metadata[key] = post_from_file.metadata[key]
 
     # 4 更新tag和category的id信息
     tags = []
     categories = []
+    postType = post_metadata["postType"]
     for tag in post_metadata["tag"]:
         if tag in self.tags_dict.keys():
             tags.append(self.tags_dict[tag])
         else:
             tags.append(create_tag(self, tag))
     for category in post_metadata["category"]:
-        if category in self.categories_dict.keys():
-            categories.append(self.categories_dict[category])
+        if (postType == "shuoshuo"):
+            if category in self.categories_dict["littleTalk"].keys():
+                categories.append(self.categories_dict["littleTalk"][category])
+            else:
+                categories.append(create_custom_taxonomy_term(self, "shuoshuo_category", category))
         else:
-            categories.append(create_category(self, category))
-
+            if category in self.categories_dict["article"].keys():
+                categories.append(self.categories_dict["article"][category])
+            else:
+                categories.append(create_articleCategory(self, category))
     # 5 构造上传的请求内容
     post_data = {
         "title": filename.split(".md")[0],
@@ -68,16 +75,40 @@ def _create_article(self, md_path, post_metadata) -> None:
         "categories": categories,
         "tags": tags,
     }
+    resp=None
+    if (postType == "shuoshuo" and post_metadata["status"] == "publish"):
+        # 如果是说说把内容转成HTML，这样markdown能正常显示
+        resp = httpx.post(
+            # proxies=self.proxies,
+            timeout=self.timeout,
+            url=self.url + "wp-json/wp/v2/shuoshuo",
+            headers=self.wp_header,
+            json=post_data,
+        )
+    elif (postType == "post" and post_metadata["status"] == "publish"):
+        resp = httpx.post(
+            # proxies=self.proxies,
+            timeout=self.timeout,
+            url=self.url + "wp-json/wp/v2/posts",
+            headers=self.wp_header,
+            json=post_data,
+        )
+    # try:
+    #     assert (
+    #         resp.status_code == 201
+    #     ), f"File {md_path} uploaded failed. Please try again!"
+    # except AssertionError as e:
+    #     print("Reminder from m2w: " + str(e))
+    #     raise AssertionError
 
-    resp = httpx.post(
-        url=self.url + "wp-json/wp/v2/posts",
-        headers=self.wp_header,
-        json=post_data,
-    )
     try:
-        assert (
-            resp.status_code == 201
-        ), f"File {md_path} uploaded failed. Please try again!"
+        # 说说200是成功，文章201是成功
+        if resp==None:
+            print(f"删除状态下修改无需上传。")
+        elif resp.status_code != 200 and resp.status_code != 201:
+            print(f"上传失败，状态码：{resp.status_code}")
+            print("响应内容：", resp.text.encode('utf-8').decode('unicode_escape'))
+            raise AssertionError(f"File {md_path} uploaded failed. Please try again!")
     except AssertionError as e:
         print("Reminder from m2w: " + str(e))
-        raise AssertionError
+        raise

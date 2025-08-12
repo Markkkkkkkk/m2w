@@ -27,23 +27,61 @@ async def __tags_request(self, client: httpx.AsyncClient(), page_num: int):
         self.tags_dict[tags['name']] = tags['id']
 
 
+# async def get_all_tags(self, verbose) -> None:
+#     """
+#     获取所有的标签信息
+#     """
+#     tags_num = httpx.get(self.url + "wp-json/wp/v2/tags?page=1&per_page=1").headers[
+#         'x-wp-total'
+#     ]
+#     page_num = math.ceil(float(tags_num) / 30.0)
+#     async with httpx.AsyncClient() as client:
+#         task_list = []
+#         for num in range(1, page_num + 1):
+#             req = __tags_request(self, client, num)
+#             task = asyncio.create_task(req)
+#             task_list.append(task)
+#         await asyncio.gather(*task_list)
+#     if verbose:
+#         print("Get tag lists complete!")
 async def get_all_tags(self, verbose) -> None:
     """
-    获取所有的标签信息
+    获取所有的标签信息（带限流、超时、重试，保留原逻辑）
     """
-    tags_num = httpx.get(self.url + "wp-json/wp/v2/tags?page=1&per_page=1").headers[
-        'x-wp-total'
-    ]
-    page_num = math.ceil(float(tags_num) / 30.0)
-    async with httpx.AsyncClient() as client:
-        task_list = []
-        for num in range(1, page_num + 1):
-            req = __tags_request(self, client, num)
-            task = asyncio.create_task(req)
-            task_list.append(task)
-        await asyncio.gather(*task_list)
+    semaphore = asyncio.Semaphore(10)  # 限制最大并发量
+
+    async def fetch_with_retry(page_num, retries=3):
+        for attempt in range(retries):
+            try:
+                async with semaphore:
+                    async with httpx.AsyncClient(
+                        timeout=self.timeout,
+                        # proxies=self.proxies
+                    ) as client:
+                        await __tags_request(self,client, page_num)
+                        return
+            except (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.RequestError) as e:
+                if attempt < retries - 1:
+                    await asyncio.sleep(2 ** attempt)  # 指数退避
+                else:
+                    print(f"请求失败: 标签第 {page_num} 页 - {e}")
+                    return
+
+    # 获取标签总数
+    async with httpx.AsyncClient(timeout=self.timeout) as client:
+        resp = await client.get(self.url + "wp-json/wp/v2/tags?page=1&per_page=1")
+        resp.raise_for_status()
+        tags_num = int(resp.headers['x-wp-total'])
+
+    page_num = math.ceil(tags_num / 30)
+
+    # 并发执行请求
+    tasks = [fetch_with_retry(page) for page in range(1, page_num + 1)]
+    await asyncio.gather(*tasks)
+
     if verbose:
-        print("Get tag lists complete!")
+        print(f"Get tag lists complete! 共获取 {tags_num} 个标签")
+
 
 
 def create_tag(self, tag_name: str) -> int:
@@ -55,6 +93,8 @@ def create_tag(self, tag_name: str) -> int:
     """
     try:
         resp = httpx.post(
+            # proxies=self.proxies,
+            timeout=self.timeout,
             url=self.url + "wp-json/wp/v2/tags",
             headers=self.wp_header,
             json={"name": tag_name},

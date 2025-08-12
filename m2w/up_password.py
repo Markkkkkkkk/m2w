@@ -53,8 +53,11 @@ def find_files(path, suffix=".md"):
     ff(path, suffix=".md")
     return result
 
-PATH_LEGACY_JSON = "" # 用于 delete 更新 json 文件
-def md_detect(path_markdown, path_legacy_json, verbose=True):
+
+PATH_LEGACY_JSON = ""  # 用于 delete 更新 json 文件
+
+
+def md_detect(path_markdown, path_legacy_json, post_metadata, verbose=True):
     """
     ### Description
     Gather paths of brand-new and changed legacy markdown files.
@@ -116,40 +119,73 @@ def md_detect(path_markdown, path_legacy_json, verbose=True):
 
         # Compare changes in markdown files
         md5_legacy = read_json_as_dict(path_legacy_json)
-        md5_all = {}
+        md5_all_temp = {}
         for i in all:
-            md5_all[i] = get_file_md5(i)
-        save_dict_as_json(md5_all, path_legacy_json)  # Update legacy json
+            md5_all_temp[i] = get_file_md5(i)
+        # 重新封装md5_all区分文章和说说
+        md5_all = {
+            "article": {},
+            "littleTalk": {}
+        }
+        # 遍历原始字典
+        for file_path, md5 in md5_all_temp.items():
+            # 判断路径是否包含 article 或 littleTalk
+            if 'article' in file_path:
+                category = "article"
+            elif 'littleTalk' in file_path:
+                category = "littleTalk"
+            else:
+                continue  # 如果路径不符合要求，跳过
 
+            # 根据分类将文件路径添加到 md5_all 中
+            md5_all[category][file_path] = md5
+        save_dict_as_json(md5_all, path_legacy_json)  # Update legacy json
         # Confirm new files
-        new = set(md5_all.keys()).difference(set(md5_legacy.keys()))
-        if len(new) >= 1:
-            for j in new:
+        littleTalkNew = set(md5_all['littleTalk'].keys()).difference(set(md5_legacy['littleTalk'].keys()))
+        if len(littleTalkNew) >= 1:
+            for j in littleTalkNew:
                 if verbose:
                     print('New content! ' + j)
-                md5_legacy[j] = get_file_md5(j)
+                md5_legacy['littleTalk'][j] = get_file_md5(j)
         else:
             if verbose:
-                print('No new markdown files. Ignored.')
+                print('No littleTalk new markdown files. Ignored.')
+        articleNew = set(md5_all['article'].keys()).difference(set(md5_legacy['article'].keys()))
+        if len(articleNew) >= 1:
+            for j in articleNew:
+                if verbose:
+                    print('New content! ' + j)
+                md5_legacy['article'][j] = get_file_md5(j)
+        else:
+            if verbose:
+                print('No article new markdown files. Ignored.')
         # print(new)
         # print(list(md5_all.keys()))
         # print(list(md5_legacy.keys()))
 
         # Confirm changed legacy files
         md5_filter = md5_all
-        intersect_key = set(sorted(md5_all.keys())) & set(sorted(md5_legacy.keys()))
-        for i in intersect_key:
-            if md5_legacy[i] == md5_all[i]:
-                md5_filter.pop(i)
+        littleTalkIntersectKey = set(sorted(md5_all['littleTalk'].keys())) & set(sorted(md5_legacy['littleTalk'].keys()))
+        for i in littleTalkIntersectKey:
+            if md5_legacy['littleTalk'][i] == md5_all['littleTalk'][i]:
+                md5_filter['littleTalk'].pop(i)
             else:
                 if verbose:
-                    print('Content changed!: ', i)
-        if len(md5_filter) == 0:
+                    print('littleTalk Content changed!: ', i)
+        articleIntersectKey = set(sorted(md5_all['article'].keys())) & set(sorted(md5_legacy['article'].keys()))
+        for i in articleIntersectKey:
+            if md5_legacy['article'][i] == md5_all['article'][i]:
+                md5_filter['article'].pop(i)
+            else:
+                if verbose:
+                    print('article Content changed!: ', i)
+        if len(md5_filter['littleTalk']) and len(md5_filter['article']) == 0:
             if verbose:
-                print('No changed legacy markdown files. Ignored.')
+                print('No article or littleTalk changed legacy markdown files. Ignored.')
 
         # Output
-        result = {"new": list(new), "legacy": list(md5_filter.keys())}  #
+        result = {"new": {"article": articleNew, "littleTalk": littleTalkNew},
+                  "legacy": {"littleTalk": md5_filter['littleTalk'].keys(), "article": md5_filter['article'].keys()}}  #
         return result
 
 
@@ -172,7 +208,7 @@ def up_password(client, md_upload, md_update, post_metadata, force_upload=False,
 
     # Assistant function for uploading
     def upload_one_post(
-        client, filepath, post_metadata, all_cnt, md_cnt, process_number, verbose
+            client, filepath, post_metadata, all_cnt, md_cnt, process_number, verbose
     ):
         post = m2w.upload.make_post(filepath, post_metadata)  # Upload the new markdown
         process_number2 = process_number + 1

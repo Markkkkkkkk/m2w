@@ -1,4 +1,4 @@
-
+import traceback
 
 from m2w.rest_api import RestApi
 from m2w.up_password import md_detect, up_password
@@ -52,9 +52,9 @@ async def up(
         client = wp_xmlrpc(domain, username, password)
     
     # Gather paths of brand-new and changed legacy markdown files
-    res = md_detect(path_markdown, path_legacy_json, verbose=verbose)
-    md_upload = res["new"]
-    md_update = res["legacy"]
+    res = md_detect(path_markdown, path_legacy_json, post_metadata,verbose=verbose)
+    md_upload = res["new"]["article"]|res["new"]["littleTalk"]
+    md_update = res["legacy"]["article"]|res["legacy"]["littleTalk"]
 
     # Backup the latest legacy*.json
     shutil.copyfile(path_legacy_json, path_legacy_json + "_temporary_latest")
@@ -63,7 +63,7 @@ async def up(
 
     # Upload & Update
     if len(md_upload) > 0 or len(md_update) > 0:
-        for retry in range(max_retries):
+        for retry in range(1):
             try:
                 if rest_api:
                     # Use REST API mode to upload/update articles
@@ -89,6 +89,8 @@ async def up(
                 break
             except Exception as e:
                 print("OOPS, the upload/update process failed!")
+                print(f"Error: {e}")
+                traceback.print_exc()  # 会打印完整的异常堆栈
                 if os.path.exists(path_legacy_json + "_temporary_old"):
                     shutil.copyfile(path_legacy_json + "_temporary_old", path_legacy_json)
                 if retry < max_retries - 1:

@@ -1,0 +1,18 @@
+{
+	"web01": {
+        "domain": "https://hyly.net/",
+        "username": "Mark",
+        "application_password": "OFe9 Inw9 1rgG d6hw h2DA uYKN",
+        "path_markdown": [
+            "D:/workDocument/somniloquy/article",
+            "D:/workDocument/somniloquy/littleTalk"
+        ],
+        "post_metadata": {
+            "category": ["test"],
+            "tag": ["test"],
+            "postType": "post",
+            "status": "publish"
+        },
+        "path_legacy_json": "/config/legacy"
+    }
+}
