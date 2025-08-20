@@ -87,26 +87,27 @@ def _update_article(self, md_path, post_metadata, last_update=False) -> None:
         )
     # 删除文章:force=false（默认）	文章会进入回收站，可恢复  force=true 彻底删除文章，无法恢复
     if (status == 'delete'):
-        if (postType == "shuoshuo"):
-            resp = httpx.delete(
-                # proxies=self.proxies,
-                # url=self.url
-                # + f"wp-json/wp/v2/posts/{self.article_title_dict[os.path.basename(md_path).strip('.md')]}",
-                url=self.url
-                    + f"wp-json/wp/v2/shuoshuo/{post_data['title']}",
-                timeout=self.timeout,
-                headers=self.wp_header
-            )
-        else:
-            resp = httpx.delete(
-                timeout=self.timeout,
-                # proxies=self.proxies,
-                # url=self.url
-                # + f"wp-json/wp/v2/posts/{self.article_title_dict[os.path.basename(md_path).strip('.md')]}",
-                url=self.url
-                    + f"wp-json/wp/v2/posts/{self.title_dict['article'][filename_prefix]}?force=true",
-                headers=self.wp_header
-            )
+        print("接口删除文章太危险，请登录wordpress后台手动删除说说/文章。")
+        # if (postType == "shuoshuo"):
+        #     resp = httpx.delete(
+        #         # proxies=self.proxies,
+        #         # url=self.url
+        #         # + f"wp-json/wp/v2/posts/{self.article_title_dict[os.path.basename(md_path).strip('.md')]}",
+        #         url=self.url
+        #             + f"wp-json/wp/v2/shuoshuo/{post_data['title']}",
+        #         timeout=self.timeout,
+        #         headers=self.wp_header
+        #     )
+        # else:
+        #     resp = httpx.delete(
+        #         timeout=self.timeout,
+        #         # proxies=self.proxies,
+        #         # url=self.url
+        #         # + f"wp-json/wp/v2/posts/{self.article_title_dict[os.path.basename(md_path).strip('.md')]}",
+        #         url=self.url
+        #             + f"wp-json/wp/v2/posts/{self.title_dict['article'][filename_prefix]}?force=true",
+        #         headers=self.wp_header
+        #     )
     else:
         if (postType == "shuoshuo"):
             resp = httpx.put(
