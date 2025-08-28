@@ -28,3 +28,5 @@ m2w/rest_api/__pycache__
 
 #vscode configuration
 .vscode
+/build/
+/config/user.json
