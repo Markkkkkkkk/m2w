@@ -1,60 +1,82 @@
-### [English](README.md) | [简体中文](README.zh-CN.md)
-
-# m2w: Markdown to WordPress
-
-<p align="left">
-<a href=""><img src="https://img.shields.io/badge/python-3.7%2B-orange"></a>
-<a href=""><img src="https://img.shields.io/badge/platform-Windows%7Clinux%7CMacOS-brightgreen"></a>
-<a href=""><img src="https://img.shields.io/github/downloads/huangwb8/m2w/total"></a>
-<a href=""><img src="https://img.shields.io/github/stars/huangwb8/m2w?style=social"></a>
-<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fhuangwb8%2Fm2w?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhuangwb8%2Fm2w.svg?type=shield"/></a>
-</p>
-Automatically upload and update local markdown to WordPress based on REST API/Password via Python
-
-:star2::star2::star2: Welcome m2w 2.5!
-
-Chinese tutorial: [Docker系列 WordPress系列 WordPress上传或更新Markdown的最佳实践-m2w 2.0](https://blognas.hwb0307.com/linux/docker/2813)
 
 
-## Table of Contents
+# Preface
 
-- [m2w: Markdown to WordPress](#m2w-markdown-to-wordpress)
-  - [Table of Contents](#table-of-contents)
-  - [Background](#background)
-  - [Install](#install)
-  - [Usage](#usage)
-    - [Enable REST API](#enable-rest-api)
-    - [Use m2w](#use-m2w)
-  - [Demo](#demo)
-  - [LOG](#log)
-  - [TO-DO](#to-do)
-  - [Related Efforts](#related-efforts)
-  - [Maintainers](#maintainers)
-  - [Contributing](#contributing)
-  - [License](#license)
-  - [More](#more)
+We mentioned before that the workflow of the blog is to write a markdown file locally in Typora, and then synchronize it to wordpress through the m2w tool interface. And today we will introduce the use of M2W tools.
 
-## Background
+m2w I modified it based on [this project] (https://github.com/huangwb8/m2w) (based on v2.5.12 version), and added the functions I wanted on this basis:
 
-`m2w` is a tool for automatically uploading or updating local Markdown to WordPress via Python, based on REST API (`2.5+`) or Password.
+1. Add restAPI and account password to staus:delete to permanently delete articles.
+2. Realize the addition, deletion and modification of the statement. Implement the acquisition and creation of the classification.
+3. Save the talk and the article legacy separately. In this way, there is no need to worry about the problem of duplicate names with the article.
+4. Optimized the interface for asynchronously obtaining categories, tags, articles, and talk lists. It will not be too old to report the wrong timeout.
 
-`m2w` has these features: 
+The modified m2w can be found here: [Github] (https://github.com/Markkkkkkkk/m2w), [Gitee] (https://gitee.com/markk/m2w); Next, we will introduce how to use M2W after the magic change.
 
-+ **Support REST API**, which is safer then conventional password!
-+ Use `config/user.json` to maintain the user information in a little different way comparing with `m2w 1.0`.
-+ You can just keep your file structures locally as you like.
-+ You can manage lots of websites at the same time via multiple `legacy_*.json`.
-+ All you need to deal with is a single python script `myblog.py` instead of two (`update.py` and `upload.py` in `m2w 1.0`).
-+ Ignore repeated new markdown files for uploading (`v2.2.4+`)
+All m2w versions rely on xmlrcp.php, so don't turn off its API for your WordPress site (open by default). In the era of WordPress 6.0, with Wordfence, there is actually no need to worry too much about security issues. It is recommended to use m2w when the site has https, otherwise it may cause account/password leakage (if the blog only has http, it is recommended to use https; You can see [this article] (https://hyly.net/categroy/article/code/wordpress/353/#header-id-22)).
 
-## Install
+# Regular use
 
-> [Miniconda](https://docs.conda.io/en/latest/miniconda.html) is recommended to manage Python version and related dependencies.
+## application_password Acquisition
 
-Here is the dependency: 
+Get the 'application_password' first:
 
-```python
-# Python version
+If you are using a security plugin like wordfence, enable WordPress application passwords:
+
+! [img] (https://image.hyly.net/i/2025/08/27/321ec1832fe1efcf00877b69ab4f6297-0.webp)
+
+Create a new REST API:
+
+! [img] (https://image.hyly.net/i/2025/08/28/6c428375bc39e3d183bdacc44bb67314-0.webp)
+
+Keep the API safe. If necessary, you can regenerate or delete:
+
+! [img] (https://image.hyly.net/i/2025/08/28/34a04329512a0c8278c2b8652527edbd-0.webp)
+
+## Software Download
+
+Find the software package in the Release on [Github] (https://github.com/Markkkkkkkk/m2w) or [Gitee] (https://gitee.com/markk/m2w):
+
+! [image-20250828150957356] (https://image.hyly.net/i/2025/08/28/cef5349c13219b9913b906fa0bee788c-0.webp)
+
+! [image-20250828151014532] (https://image.hyly.net/i/2025/08/28/f8e0741d5e828cc7dba3b30a27378c06-0.webp)
+
+Download it and then unzip it, first modify the 'config/user.json' file:
+
+! [image-20250828151239260] (https://image.hyly.net/i/2025/08/28/6e43e2196dbe8e6b2e8edf9ff7cc7e83-0.webp)
+
+After the modification is completed, open the 'run_blog_and_git.bat' file in Notepad to modify the corresponding part:
+
+! [image-20250828151632057] (https://image.hyly.net/i/2025/08/28/c8ce3add01fc8c504d3a34d6780c4ecc-0.webp)
+
+After the above two files are modified, save them, and directly execute 'run_blog_and_git.bat' to automatically upload the article to wordpress and save the latest article to git, so that the original article sample will not be lost, and it is convenient to view the article modification record.
+
+When you write Typora articles in the future, it is also recommended to add 'YAML Front Matter' at the beginning, which is something like this:
+
+! [image-20250828155147169] (https://image.hyly.net/i/2025/08/28/245e5eb47ddb186d02120cd956f6ebac-0.webp)
+
+It needs to be written at the beginning of the article, and it doesn't work to use this syntax anywhere else. Specifically, it is written like this:
+
+```
+---
+category: [Blog Builder]
+tag: [Server Settings, SSH Key Login, Fail2ban, Website Security, wordfence, WPS Hide Login, CloudFlare]
+postType: post
+status: publish
+---
+```
+
+1. Category:Article/Talk about the name of the category. You can write more than one, but it is recommended to write only one, tags can be written as several. If wordpress does not have a category, it will create a category, and if there is, it will divide the existing category.
+2. tag: The tag of the article/talk can be written as many as one. If wordpress doesn't have this tag, it will create a tag, and if it does, it will paste an existing tag.
+3. postType: The publish type. post is the article, shuoshuo is the release of the story.
+4. status: The status of the article. publish will publish to wordpress when running m2w, draft will not publish wordpress. (delete will delete the article of the same name on wordpress/talk, use it with caution, and you need to turn on the deletion function below.) ）
+
+# Source code download
+
+If you want to see the source code and make magic changes again, you can directly download the source code to customize the settings. It is recommended to use [Miniconda](https://gitee.com/link?target=https%3A%2F%2Fdocs.conda.io%2Fen%2Flatest%2Fminiconda.html) to manage Python versions and related dependencies, and [Pycharm]( https://www.jetbrains.com/pycharm/) Tools to modify the code, which are the required dependencies:
+
+```
+# Python version requirements
 python_requires='>=3.7.6'
 
 # Dependencies
@@ -66,175 +88,10 @@ install_requires=[
 ]
 ```
 
-After 2022-12-10, `m2w` was uploaded onto [PyPi](https://pypi.org/project/m2w/). To install `m2w`, just run this code in your shell/conda environment:
+It should be noted that in later versions, I think it is a bit too dangerous for m2w to directly control the deletion of articles, and this is not a high-frequency operation, so the function of deleting articles/talking by setting the status of 'status:delete' is banned. If you want to have this function, you can download the source code to undo this comment, the directory location is 'm2w/rest_api/update.py:90' here:
 
-```
-pip install m2w
-```
+! [image-20250828154659658] (https://image.hyly.net/i/2025/08/28/e88cef122909357441384bfdd6cf26d0-0.webp)
 
-You can also directly download `m2w`  from this repotory. The usage is exactly the same.
+# Summary
 
-You can specify version or resource when installing `m2w`:
-
-```bash
-pip install -i https://pypi.org/simple m2w==2.5.13
-```
-
-Generally, the latest version of `m2w` is recommended.
-
-## Usage
-
-### Enable REST API
-
-> This step is needed only **when you want to use the REST API mode**.
-
-+ If any, please allow Application password of WordPress in Wordfence:
-
-![WBrffVs5Ty](https://chevereto.hwb0307.com/images/2023/06/05/WBrffVs5Ty.png)
-
-+ Go to personal settings and add a new REST API: 
-
-![sq7kG7Vsqp](https://chevereto.hwb0307.com/images/2023/06/05/sq7kG7Vsqp.png)
-
-+ Please record the new REST API in a safe place. If you forget it or suspect its safety, please remove the old API and create a new one:
-
-![GddR0nP8mn](https://chevereto.hwb0307.com/images/2023/06/05/GddR0nP8mn.png)
-
-### Use m2w
-
-1. Install m2w from PyPi or this Github repotory. 
-2. Build a `myblog.py` file (or other names you like) in `<path01>`. Here is the [demo](https://github.com/huangwb8/m2w/blob/main/myblog.py). Create `<path02>/config/user.json` and set `path_m2w` as `<path02>` in `myblog.py`:
-
-```python
-path_m2w = '<path02>' # Absolute path of m2w config folder
-```
-
-3. Define `<path02>/config/user.json`.  You can add many websites like `web01`!  Please go to the [demo](https://github.com/huangwb8/m2w/blob/main/config/user.json) for more details. Here are some interpretations: 
-  + **user.json** for REST API mode:
-
-
-```json
-"web01": {
-        "domain": "https://domain-01.com",
-        "username": "username-01",
-        "application_password": "password-01",
-        "path_markdown": [
-            "E:/Github/m2w/@test/main",
-            "E:/Github/m2w/@test/main2"
-        ],
-        "post_metadata": {
-            "category": ["test"],
-            "tag": ["test"],
-            "status": "publish"
-        },
-        "path_legacy_json": "/config/legacy"
-    }
-```
-
-+ **user.json** for Password mode: 
-
-
-```json
-"web01": {
-        "domain": "https://domain-01.com",
-        "username": "username-01",
-        "password": "password-01",
-        "path_markdown": [
-            "E:/Github/m2w/@test/main",
-            "E:/Github/m2w/@test/main2"
-        ],
-        "post_metadata": {
-            "category": ["test"],
-            "tag": ["test"],
-            "status": "publish"
-        },
-        "path_legacy_json": "/config/legacy"
-    }
-```
-
-  + **domain, username, application_password/password**:  The information of your WordPress site and account. `application_password` is REST API, and `password` is the conventional passord of your account. if both `application_password` and `password` exit, only `application_password` is available for m2w.
-  + **path_markdown**: Add as much top folders as you want! 
-  + **post_metadata/path_legacy_json**: Set default if you don't know what they are. 
-
-4. Run `myblog.py` like: 
-
-```bash
-python <path01>/myblog.py
-```
-
-## Demo
-
-> This demo is conducted in Win10 with [VScode](https://code.visualstudio.com/).
-
-As shown in the following GIF, all changed or brand-new markdowns can be automatically updated/upload via just a simple command `python myblog.py`!
-
-![image-20230609173358533](https://chevereto.hwb0307.com/images/2023/06/09/image-20230609173358533.png)
-
-## LOG
-
-+ **2024-11-13**：Optimize optimize strategy for .md removement. [Detail](https://github.com/huangwb8/m2w/pull/18). Thanks [linglilongyi](https://github.com/linglilongyi)!
-+ **2023-06-05**: m2w 2.0 was frozen at [v2.2.11](https://github.com/huangwb8/m2w/releases/tag/v2.2.11). Enjoy m2w 2.5+ from now on!
-+ **2022-12-14**：`m2w.py` is the same name as `m2w` package, which would bring some bugs. I change the name of the demo script as `myblog.py`.
-+ **2022-12-10**：Upload `m2w 2` to PyPi. You can install `m2w 2` with code (in Shell)  like `pip install -i https://pypi.org/simple m2w`. The project url is [https://pypi.org/project/m2w](https://pypi.org/project/m2w).
-+ **2022-12-08**：Ignore repeated uploading of new markdown based on their file names. Update ot `m2w 2.2.4` (Strongly recommended)! 
-+ **2022-12-06**：Optimized parameter space of m2w, which make it more flexible. Update ot `m2w 2.2`!
-+ **2022-12-03**：Brand-new m2w 2.0!
-+ **2022-11-13**：Add error control for the `Client` function, which is helpful to avoid legacy bugs if the connection to the WordPress website is not available.
-+ **Before**: Create `m2w` project.
-
-## TO-DO
-
-- [ ] shuoshuo and page update & upload
-
-- [ ] Enhanced markdown support: `python-markdown` to `markdown-it-py`
-
-- [ ] Support Hexo-like YAML head：
-
-```yaml
-title: I Love You
-tags:
-  - You
-  - I
-  - Love
-categories:
-  - Note
-date: 2023-11-08 16:38:31
-update: 2023-11-08 16:40:31
---
-```
-
-- [ ] Develop GUI across OS
-
-## Related Efforts
-
-- [nefu-ljw/python-markdown-to-wordpress](https://github.com/nefu-ljw/python-markdown-to-wordpress)
-
-## Maintainers
-
-+ [@huangwb8](https://t.me/hwb0307)
-
-## Contributing
-
-> Feel free to dive in! [Open an issue](https://github.com/huangwb8/m2w/issues/new) or submit PRs. m2w follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct.
-
-<a href="https://github.com/huangwb8/m2w/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=huangwb8/m2w" />
-</a>
-
-## License
-
-This software depends on other packages that may be licensed under different open source licenses. 
-
-m2w is released under the MIT license. See [LICENSE](https://github.com/huangwb8/m2w/blob/main/license.txt) for details.
-
-
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhuangwb8%2Fm2w.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhuangwb8%2Fm2w?ref=badge_large)
-
-## More
-
-> Applications similar to m2w
-
-+  [nefu-ljw/python-markdown-to-wordpress](https://github.com/nefu-ljw/python-markdown-to-wordpress): The root project of m2w!
-+  [WordPressXMLRPCTools](https://github.com/zhaoolee/WordPressXMLRPCTools): Manage WordPress posts in Hexo way.
-+  [markpress](https://github.com/skywind3000/markpress):  Write WordPress in Markdown in Your Favorite Text Editor
-+  [wordpress-markdown-blog-loader](https://pypi.org/project/wordpress-markdown-blog-loader/): This utility loads markdown blogs into WordPress as a post. It allows you to work on your blog in your favorite editor and keeps all your blogs in git.
+The configuration of m2w is not too difficult to use, if you have any questions or feel that you want to add some functions that everyone likes, please leave a message below, and you will consider adding the most popular function~
