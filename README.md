@@ -93,6 +93,8 @@ It should be noted that in later versions, I think it is a bit too dangerous for
 
 ![image-20250828154659658](https://image.hyly.net/i/2025/08/28/e88cef122909357441384bfdd6cf26d0-0.webp)
 
+> **Note:** If you still need to post status updates and the like, you also need to add the status update interface function. For details, please refer to [this article](https://www.hyly.net/categroy/article/code/wordpress/380#header-id-6).
+
 # Summary
 
 The configuration of m2w is not too difficult to use, if you have any questions or feel that you want to add some functions that everyone likes, please leave a message below, and you will consider adding the most popular function~

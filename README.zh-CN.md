@@ -92,6 +92,8 @@ install_requires=[
 
 ![image-20250828154659658](https://image.hyly.net/i/2025/08/28/e88cef122909357441384bfdd6cf26d0-0.webp)
 
+> **注意：**如果小伙伴还需要发布说说等，还需要添加说说接口函数，详细可以看[这篇文章](https://www.hyly.net/categroy/article/code/wordpress/380#header-id-6)。
+
 # 小结
 
 m2w的配置使用不是太难，使用过程中如有疑问或觉得想增加什么大家都喜欢的功能，请小伙伴们在下方留言，会考虑加上呼声最高的功能噢~
