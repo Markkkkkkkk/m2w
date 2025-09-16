@@ -60,7 +60,7 @@ def find_post(filepath, client):
                     return post
             offset = offset + batch
     except Exception as e:
-        print('Reminder from Bensz(https://blognas.hwb0307.com) : ' + str(e))
+        print('Reminder from Mark(https://hyly.net) : ' + str(e))
         raise e
         # 正常退出
         # sys.exit(0)

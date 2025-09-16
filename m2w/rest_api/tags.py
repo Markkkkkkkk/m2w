@@ -9,6 +9,7 @@ import re
 import httpx
 import math
 import asyncio
+import urllib.parse
 
 
 async def __tags_request(self, client: httpx.AsyncClient(), page_num: int):
@@ -20,11 +21,11 @@ async def __tags_request(self, client: httpx.AsyncClient(), page_num: int):
             resp.status_code == 200
         ), "Error when requiring tag lists. Pleas try later!"
     except AssertionError as e:
-        print("Reminder from Bensz(https://blognas.hwb0307.com) : " + str(e))
+        print("Reminder from Mark(https://hyly.net) : " + str(e))
         raise AssertionError
 
     for tags in resp.json():
-        self.tags_dict[tags['name']] = tags['id']
+        self.tag_slug_dict[urllib.parse.unquote(tags['slug'])] = tags['id']
 
 
 # async def get_all_tags(self, verbose) -> None:
@@ -102,7 +103,7 @@ def create_tag(self, tag_name: str) -> int:
         assert (
             resp.status_code == 201
         ), f"Tag created failed. Please try again! Messages:{resp.json()['message']}"
-        self.tags_dict[tag_name] = resp.json()["id"]
+        self.tag_slug_dict[tag_name.lower()] = resp.json()["id"]
         return resp.json()['id']
     except AssertionError as e:
         print("Reminder from m2w: " + str(e))

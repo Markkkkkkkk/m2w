@@ -26,7 +26,8 @@ class RestApi:
             "Authorization": "Basic " + base64.b64encode(f"{wp_username}:{wp_password}".encode()).decode("utf-8")}
         self.title_dict = {"article": {}, "littleTalk": {}}
         self.categories_dict = {"article": {}, "littleTalk": {}}
-        self.tags_dict = {}
+        # 因为wordpress会把标签的别名slug都统一小写，那么不同大小写的tag他们的别名就一样的，所以这里需要记录slug然后有重复的使用之前创建的tag就可以了。
+        self.tag_slug_dict = {}
         self.timeout = httpx.Timeout(connect=60.0, read=120.0, write=120.0,
                                      pool=120.0)
         # self.proxies = {  #     "http://": "http://127.0.0.1:7078",  #     "https://": "http://127.0.0.1:7078",  # }

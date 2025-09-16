@@ -51,8 +51,10 @@ def _create_article(self, md_path, post_metadata) -> None:
     categories = []
     postType = post_metadata["postType"]
     for tag in post_metadata["tag"]:
-        if tag in self.tags_dict.keys():
-            tags.append(self.tags_dict[tag])
+        # 如果已经存在同名小写slug则把ID赋值，否则用tag名字重新创建。
+        tagSlug=tag.lower()
+        if tagSlug in self.tag_slug_dict.keys():
+            tags.append(self.tag_slug_dict[tagSlug])
         else:
             tags.append(create_tag(self, tag))
     for category in post_metadata["category"]:
